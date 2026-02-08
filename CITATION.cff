@@ -1,6 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this dataset in academic work, please cite it using the metadata below."
 title: "Hospital Deterioration Dataset — Simulated Early Warning Benchmark"
+date-released: "2026-02-08"
+version: "1.0.3"
 authors:
   - family-names: "Masryo"
     given-names: "Tarek"

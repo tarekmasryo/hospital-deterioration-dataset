@@ -54,12 +54,21 @@ This repo includes two lightweight safety nets:
 Run locally:
 
 ```bash
+# Verify published files (requires sha256sum)
 sha256sum -c checksums.sha256
+
+# Cross-platform verification
+python scripts/make_checksums.py --check
+
+# Dataset sanity checks
 python scripts/validate_dataset.py --data-dir data
 
-> Tip: add `--strict` to treat soft data issues as errors (default is warning-only for a small set of known edge cases).
+# Build derived views
 python scripts/build_views.py --data-dir data --out-dir generated
 ```
+
+Tip: add `--strict` to treat soft data issues as errors (default is warning-only for a small set of known edge cases).
+
 
 Windows PowerShell checksum example:
 

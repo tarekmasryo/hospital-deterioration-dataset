@@ -32,6 +32,10 @@ jobs:
         run: |
           python scripts/validate_dataset.py --data-dir data
 
+      - name: Verify checksums
+        run: |
+          python scripts/make_checksums.py --check
+
       - name: Build derived views (smoke test)
         run: |
           python scripts/build_views.py --data-dir data --out-dir generated --max-patients 200
