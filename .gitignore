@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+venv/
+ENV/
+
+# Tooling
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Generated dataset views (large)
+generated/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -42,7 +42,30 @@ The dataset is designed as a **machine-learning-ready benchmark** for:
 
 For column-level details, see the **data dictionary**:
 
-- `hospital_deterioration_data_dictionary.md`
+- `data_dictionary.md`
+
+## ✅ Integrity & validation
+
+This repo includes two lightweight safety nets:
+
+- **Checksums** (`checksums.sha256`) so you can verify files were not modified.
+- **Validation script** (`scripts/validate_dataset.py`) for key/range/alignment checks.
+
+Run locally:
+
+```bash
+sha256sum -c checksums.sha256
+python scripts/validate_dataset.py --data-dir data
+
+> Tip: add `--strict` to treat soft data issues as errors (default is warning-only for a small set of known edge cases).
+python scripts/build_views.py --data-dir data --out-dir generated
+```
+
+Windows PowerShell checksum example:
+
+```powershell
+Get-FileHash .\data\patients.csv -Algorithm SHA256
+```
 
 ---
 
@@ -50,13 +73,16 @@ For column-level details, see the **data dictionary**:
 
 ### 3.1 📄 Files
 
-| File                                   | Granularity                                      | Description                                                                  |
-|----------------------------------------|--------------------------------------------------|------------------------------------------------------------------------------|
-| `patients.csv`                         | 1 row per patient (10,000 rows)                  | Static patient data: demographics, comorbidities, admission type, baseline risk, LOS, high-level outcomes |
-| `vitals_timeseries.csv`               | 1 row per `(patient_id, hour_from_admission)`    | Hourly vital signs and monitoring fields                                     |
-| `labs_timeseries.csv`                 | 1 row per `(patient_id, hour_from_admission)`    | Hourly lab values and sepsis risk score                                      |
-| `hospital_deterioration_hourly_panel.csv` | 1 row per `(patient_id, hour_from_admission)` | Joined vitals + labs + patient-level features + all deterioration labels     |
-| `hospital_deterioration_ml_ready.csv` | 1 row per hourly observation                     | Features (vitals, labs, static features) + target `deterioration_next_12h`   |
+| File | Granularity | Description |
+|---|---|---|
+| `data/patients.csv` | 1 row per patient (10,000 rows) | Static patient data: demographics, comorbidities, admission type, baseline risk, LOS, and outcomes |
+| `data/vitals_timeseries.csv` | 1 row per `(patient_id, hour_from_admission)` | Hourly vital signs and monitoring fields |
+| `data/labs_timeseries.csv` | 1 row per `(patient_id, hour_from_admission)` | Hourly lab values and sepsis risk score |
+| `data_dictionary.md` | Documentation | Column-level dictionary (includes canonical tables + derived views) |
+| `generated/hospital_deterioration_hourly_panel.csv` | 1 row per `(patient_id, hour_from_admission)` | **Generated**: joined vitals + labs + patient features + labels |
+| `generated/hospital_deterioration_ml_ready.csv` | 1 row per hourly observation | **Generated**: features + target `deterioration_next_12h` |
+
+> Note: The `generated/` views are produced by `python scripts/build_views.py` and are **not committed** to keep the repo lightweight.
 
 All features are fully observed (**no missing values**). Time is expressed as **hours from admission**.
 
@@ -65,13 +91,13 @@ All features are fully observed (**no missing values**). Time is expressed as **
 ### 3.2 ⏱️ Granularity
 
 - **Patient level**  
-  - `patients.csv` — one row per patient (10,000 rows).
+  - `data/patients.csv` — one row per patient (10,000 rows).
 
 - **Hourly time series**  
-  - `vitals_timeseries.csv` — one row per `(patient_id, hour_from_admission)` for vital signs.  
-  - `labs_timeseries.csv` — one row per `(patient_id, hour_from_admission)` for lab values.  
-  - `hospital_deterioration_hourly_panel.csv` — one row per `(patient_id, hour_from_admission)` with vitals, labs, static features, and labels.  
-  - `hospital_deterioration_ml_ready.csv` — same hourly granularity, but with features + single target only.
+  - `data/vitals_timeseries.csv` — one row per `(patient_id, hour_from_admission)` for vital signs.  
+  - `data/labs_timeseries.csv` — one row per `(patient_id, hour_from_admission)` for lab values.  
+  - `generated/hospital_deterioration_hourly_panel.csv` — one row per `(patient_id, hour_from_admission)` with vitals, labs, static features, and labels.  
+  - `generated/hospital_deterioration_ml_ready.csv` — same hourly granularity, but with features + single target only.
 
 Each patient has a length of stay between **12 and 72 hours** (`los_hours`), and the time series cover:
 
@@ -83,7 +109,7 @@ hour_from_admission = 0, 1, 2, ..., los_hours - 1
 
 ## 📘 4. File descriptions
 
-### 4.1 `patients.csv` — Patient-level static data
+### 4.1 `data/patients.csv` — Patient-level static data
 
 **One row per patient (10,000 rows).**  
 Includes:
@@ -107,7 +133,7 @@ Includes:
 
 ---
 
-### 4.2 `vitals_timeseries.csv` — Hourly vital signs
+### 4.2 `data/vitals_timeseries.csv` — Hourly vital signs
 
 **One row per `(patient_id, hour_from_admission)`.**
 
@@ -129,7 +155,7 @@ Includes hourly:
 
 ---
 
-### 4.3 `labs_timeseries.csv` — Hourly lab values
+### 4.3 `data/labs_timeseries.csv` — Hourly lab values
 
 **One row per `(patient_id, hour_from_admission)`.**
 
@@ -149,7 +175,7 @@ Includes hourly:
 
 ---
 
-### 4.4 `hospital_deterioration_hourly_panel.csv` — Full joined hourly panel
+### 4.4 `generated/hospital_deterioration_hourly_panel.csv` — Full joined hourly panel
 
 **One row per `(patient_id, hour_from_admission)`** with:
 
@@ -171,7 +197,7 @@ Includes hourly:
 
 ---
 
-### 4.5 `hospital_deterioration_ml_ready.csv` — ML-ready classification table
+### 4.5 `generated/hospital_deterioration_ml_ready.csv` — ML-ready classification table
 
 **One row per hourly observation** (per patient and `hour_from_admission`).
 
@@ -190,7 +216,7 @@ Minimal example:
 ```python
 import pandas as pd
 
-df = pd.read_csv("hospital_deterioration_ml_ready.csv")
+df = pd.read_csv("generated/hospital_deterioration_ml_ready.csv")
 
 X = df.drop(columns=["deterioration_next_12h"])
 y = df["deterioration_next_12h"]
@@ -238,7 +264,7 @@ It is well-suited for:
 ```python
 import pandas as pd
 
-ml = pd.read_csv("hospital_deterioration_ml_ready.csv")
+ml = pd.read_csv("generated/hospital_deterioration_ml_ready.csv")
 
 X = ml.drop(columns=["deterioration_next_12h"])
 y = ml["deterioration_next_12h"]
@@ -251,9 +277,9 @@ print(f"Features: {X.shape}, Target positive rate: {y.mean():.3f}")
 ```python
 import pandas as pd
 
-patients = pd.read_csv("patients.csv")
-vitals = pd.read_csv("vitals_timeseries.csv")
-labs = pd.read_csv("labs_timeseries.csv")
+patients = pd.read_csv("data/patients.csv")
+vitals = pd.read_csv("data/vitals_timeseries.csv")
+labs = pd.read_csv("data/labs_timeseries.csv")
 
 panel = (
     vitals
@@ -264,7 +290,7 @@ panel = (
 print(panel.shape)
 ```
 
-You can also start from `hospital_deterioration_hourly_panel.csv` directly if you prefer a pre-joined view.
+You can also start from `generated/hospital_deterioration_hourly_panel.csv` directly if you prefer a pre-joined view.
 
 ---
 
@@ -273,7 +299,7 @@ You can also start from `hospital_deterioration_hourly_panel.csv` directly if yo
 Some possible tasks:
 
 - **Binary classification**  
-  - Predict `deterioration_next_12h` using `hospital_deterioration_ml_ready.csv`.
+  - Predict `deterioration_next_12h` using `generated/hospital_deterioration_ml_ready.csv`.
 
 - **Time-series and sequence modeling**  
   - Use recurrent or transformer models over the hourly series for each patient.
